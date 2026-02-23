@@ -1,0 +1,4 @@
+package com.prography.api.session.controller;
+
+public class AdminQrcodeController {
+}
