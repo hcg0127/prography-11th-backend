@@ -29,6 +29,7 @@ import com.prography.api.member.domain.Member;
 import com.prography.api.member.dto.MemberRequestDTO;
 import com.prography.api.member.dto.MemberResponseDTO;
 import com.prography.api.member.exception.AuthErrorCode;
+import com.prography.api.member.exception.MemberErrorCode;
 import com.prography.api.member.repository.CohortMemberRepository;
 import com.prography.api.member.repository.MemberRepository;
 
@@ -165,6 +166,131 @@ class MemberCommandServiceTest {
 				.isInstanceOf(BusinessException.class)
 				.extracting("errorCode")
 				.isEqualTo(CohortErrorCode.TEAM_NOT_FOUND);
+		}
+	}
+
+	@Nested
+	@DisplayName("회원 수정 테스트")
+	class UpdateMemberTest {
+
+		@Test
+		@DisplayName("Case 1: 기수 ID가 없을 때 - 기본 정보만 수정하고 최신 기수 정보를 조회한다.")
+		void update_basic_info_only() {
+
+			// given
+			Long memberId = 1L;
+
+			MemberRequestDTO.UpdateMember request = new MemberRequestDTO.UpdateMember(
+				"NewName", "010-9999-9999", null, null, null);
+
+			Member member = Member.builder()
+				.id(memberId).name("OldName").phone("010-0000-0000").build();
+
+			CohortMember latestLog = CohortMember.builder()
+				.member(member).cohort(Cohort.builder().generation(10).build()).build();
+
+			given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
+			given(cohortMemberRepository.findTopByMemberOrderByIdDesc(member))
+				.willReturn(Optional.of(latestLog));
+
+			// when
+			MemberResponseDTO.CreateMemberResult result = memberCommandService.updateMemberProfile(request, memberId);
+
+			// then
+			assertThat(member.getName()).isEqualTo("NewName");
+			assertThat(member.getPhone()).isEqualTo("010-9999-9999");
+
+			assertThat(result.generation()).isEqualTo(10);
+
+			verify(cohortMemberRepository, times(0)).save(any());
+		}
+
+		@Test
+		@DisplayName("Case 2: 기수 ID가 있고 기존 이력이 존재할 때 - 해당 기수 이력의 파트/팀을 수정(Update)한다.")
+		void update_existing_cohort_member() {
+
+			// given
+			Long memberId = 1L;
+			Long cohortId = 11L;
+			Long newPartId = 2L;
+
+			MemberRequestDTO.UpdateMember request = new MemberRequestDTO.UpdateMember(
+				"NewName", "010-9999-9999", cohortId, newPartId, null);
+
+			Member member = Member.builder().id(memberId).build();
+			Cohort cohort = Cohort.builder().id(cohortId).generation(11).build();
+			Part newPart = Part.builder().id(newPartId).name("SERVER").build();
+
+			CohortMember existingCohortMember = CohortMember.builder()
+				.member(member).cohort(cohort).part(null).build();
+
+			given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
+			given(cohortRepository.findById(cohortId)).willReturn(Optional.of(cohort));
+			given(partRepository.findById(newPartId)).willReturn(Optional.of(newPart));
+
+			given(cohortMemberRepository.findByMemberAndCohort(member, cohort))
+				.willReturn(Optional.of(existingCohortMember));
+
+			// when
+			MemberResponseDTO.CreateMemberResult result = memberCommandService.updateMemberProfile(request, memberId);
+
+			// then
+			assertThat(existingCohortMember.getPart().getName()).isEqualTo("SERVER");
+
+			assertThat(result.partName()).isEqualTo("SERVER");
+
+			verify(cohortMemberRepository, times(0)).save(any());
+		}
+
+		@Test
+		@DisplayName("Case 3: 기수 ID가 있고 이력이 없을 때 - 새로운 기수 이력을 생성(Insert)한다.")
+		void create_new_cohort_member() {
+
+			// given
+			Long memberId = 1L;
+			Long cohortId = 12L; // 새로운 기수
+
+			MemberRequestDTO.UpdateMember request = new MemberRequestDTO.UpdateMember(
+				"Name", "Phone", cohortId, null, null);
+
+			Member member = Member.builder().id(memberId).build();
+			Cohort cohort = Cohort.builder().id(cohortId).generation(12).build();
+
+			given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
+			given(cohortRepository.findById(cohortId)).willReturn(Optional.of(cohort));
+
+			given(cohortMemberRepository.findByMemberAndCohort(member, cohort))
+				.willReturn(Optional.empty());
+
+			CohortMember savedMember = CohortMember.builder().member(member).cohort(cohort).build();
+			given(cohortMemberRepository.save(any(CohortMember.class))).willReturn(savedMember);
+
+			// when
+			MemberResponseDTO.CreateMemberResult result = memberCommandService.updateMemberProfile(request, memberId);
+
+			// then
+			verify(cohortMemberRepository, times(1)).save(any(CohortMember.class));
+
+			assertThat(result.generation()).isEqualTo(12);
+		}
+
+		@Test
+		@DisplayName("실패: 존재하지 않는 회원 ID면 예외가 발생한다.")
+		void fail_member_not_found() {
+
+			// given
+			Long unknownId = 999L;
+			MemberRequestDTO.UpdateMember request = new MemberRequestDTO.UpdateMember(
+				"Name", "Phone", null, null, null
+			);
+
+			given(memberRepository.findById(unknownId)).willReturn(Optional.empty());
+
+			// when & then
+			assertThatThrownBy(() -> memberCommandService.updateMemberProfile(request, unknownId))
+				.isInstanceOf(BusinessException.class)
+				.extracting("errorCode")
+				.isEqualTo(MemberErrorCode.MEMBER_NOT_FOUND);
 		}
 	}
 
