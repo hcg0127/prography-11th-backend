@@ -16,6 +16,7 @@ import com.prography.api.cohort.repository.TeamRepository;
 import com.prography.api.global.error.BusinessException;
 import com.prography.api.member.domain.CohortMember;
 import com.prography.api.member.domain.Member;
+import com.prography.api.member.domain.MemberStatus;
 import com.prography.api.member.dto.MemberRequestDTO;
 import com.prography.api.member.dto.MemberResponseDTO;
 import com.prography.api.member.exception.AuthErrorCode;
@@ -135,5 +136,19 @@ public class MemberCommandService {
 					.part(part)
 					.build()
 			));
+	}
+
+	public MemberResponseDTO.DeleteMemberResult deleteMember(Long id) {
+
+		Member member = memberRepository.findById(id)
+			.orElseThrow(() -> new BusinessException(MemberErrorCode.MEMBER_NOT_FOUND));
+
+		if (member.getStatus() == MemberStatus.WITHDRAWN) {
+			throw new BusinessException(MemberErrorCode.MEMBER_ALREADY_WITHDRAWN);
+		}
+
+		member.withdrawn();
+
+		return MemberResponseDTO.DeleteMemberResult.from(member);
 	}
 }

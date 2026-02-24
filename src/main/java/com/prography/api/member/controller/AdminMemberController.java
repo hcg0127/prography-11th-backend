@@ -2,6 +2,7 @@ package com.prography.api.member.controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -168,6 +169,40 @@ public class AdminMemberController {
 		@Valid @RequestBody MemberRequestDTO.UpdateMember request,
 		@Schema(description = "회원 ID") @PathVariable(name = "id") Long id) {
 		MemberResponseDTO.CreateMemberResult result = memberCommandService.updateMemberProfile(request, id);
+		return new ResponseEntity<>(CommonResponse.success(result), HttpStatus.OK);
+	}
+
+	@DeleteMapping("{id}")
+	@Operation(
+		summary = "회원 탈퇴",
+		description = "회원을 Soft-delete 처리합니다. 실제 삭제가 아닌 상태를 WITHDRAWN으로 변경합니다."
+	)
+	@ApiResponses(value = {
+		@ApiResponse(responseCode = "200", description = "성공"),
+		@ApiResponse(responseCode = "404", description = "리소스를 찾을 수 없음",
+			content = @Content(schema = @Schema(implementation = CommonResponse.ErrorDetail.class),
+				examples = @ExampleObject(
+					name = "MEMBER_NOT_FOUND",
+					summary = "회원 없음",
+					value = """
+						"code": "MEMBER_NOT_FOUND",
+						"message": "회원을 찾을 수 없습니다."
+						"""
+				))),
+		@ApiResponse(responseCode = "400", description = "잘못된 요청",
+			content = @Content(schema = @Schema(implementation = CommonResponse.ErrorDetail.class),
+				examples = @ExampleObject(
+					name = "MEMBER_ALREADY_WITHDRAWN",
+					summary = "이미 탈퇴 처리된 회원",
+					value = """
+						"code": "MEMBER_ALREADY_WITHDRAWN",
+						"message": 이미 탈퇴한 회원입니다."
+						"""
+				)))
+	})
+	public ResponseEntity<CommonResponse<MemberResponseDTO.DeleteMemberResult>> deleteMember(
+		@Schema(description = "회원 ID") @PathVariable(name = "id") Long id) {
+		MemberResponseDTO.DeleteMemberResult result = memberCommandService.deleteMember(id);
 		return new ResponseEntity<>(CommonResponse.success(result), HttpStatus.OK);
 	}
 }

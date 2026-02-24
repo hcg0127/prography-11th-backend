@@ -103,4 +103,22 @@ public class MemberResponseDTO {
 			);
 		}
 	}
+
+	public record DeleteMemberResult(
+		Long id,
+		String loginId,
+		String name,
+		MemberStatus status,
+		Instant updatedAt
+	) {
+		public static DeleteMemberResult from(Member member) {
+			return new DeleteMemberResult(
+				member.getId(),
+				member.getLoginId(),
+				member.getName(),
+				member.getStatus(),
+				member.getUpdatedAt()
+			);
+		}
+	}
 }

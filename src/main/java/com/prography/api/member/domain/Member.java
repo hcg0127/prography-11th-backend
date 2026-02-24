@@ -56,4 +56,8 @@ public class Member extends BaseTimeEntity {
 		if (phone != null)
 			this.phone = phone;
 	}
+
+	public void withdrawn() {
+		this.status = MemberStatus.WITHDRAWN;
+	}
 }
