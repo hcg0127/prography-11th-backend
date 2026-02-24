@@ -1,4 +1,4 @@
-package com.prography.api.member.controller;
+package com.prography.api.auth.controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -7,10 +7,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.prography.api.auth.dto.AuthRequestDTO;
+import com.prography.api.auth.dto.AuthResponseDTO;
+import com.prography.api.auth.service.AuthCommandService;
 import com.prography.api.global.common.CommonResponse;
-import com.prography.api.member.dto.MemberRequestDTO;
-import com.prography.api.member.dto.MemberResponseDTO;
-import com.prography.api.member.service.MemberCommandService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -28,7 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequestMapping("/auth")
 public class AuthController {
 
-	private final MemberCommandService memberCommandService;
+	private final AuthCommandService authCommandService;
 
 	@PostMapping("/login")
 	@Operation(
@@ -58,9 +58,9 @@ public class AuthController {
 						"""
 				)))
 	})
-	public ResponseEntity<CommonResponse<MemberResponseDTO.AuthLogin>> login(
-		@Valid @RequestBody MemberRequestDTO.authLogin request) {
-		MemberResponseDTO.AuthLogin result = memberCommandService.login(request);
+	public ResponseEntity<CommonResponse<AuthResponseDTO.AuthLoginResult>> login(
+		@Valid @RequestBody AuthRequestDTO.AuthLogin request) {
+		AuthResponseDTO.AuthLoginResult result = authCommandService.login(request);
 		return new ResponseEntity<>(CommonResponse.success(result), HttpStatus.OK);
 	}
 }
