@@ -58,10 +58,6 @@ public class Session extends BaseTimeEntity {
 	@Builder.Default
 	private SessionStatus status = SessionStatus.SCHEDULED;
 
-	@Column(nullable = false)
-	@Builder.Default
-	private boolean qrActive = true;
-
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "cohort_id")
 	private Cohort cohort;

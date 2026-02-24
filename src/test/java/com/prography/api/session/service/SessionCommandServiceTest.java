@@ -4,8 +4,11 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.*;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -20,11 +23,13 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import com.prography.api.cohort.domain.Cohort;
 import com.prography.api.cohort.repository.CohortRepository;
+import com.prography.api.global.error.BusinessException;
 import com.prography.api.session.domain.Qrcode;
 import com.prography.api.session.domain.Session;
 import com.prography.api.session.domain.SessionStatus;
 import com.prography.api.session.dto.SessionRequestDTO;
 import com.prography.api.session.dto.SessionResponseDTO;
+import com.prography.api.session.exception.SessionErrorCode;
 import com.prography.api.session.repository.QrcodeRepository;
 import com.prography.api.session.repository.SessionRepository;
 
@@ -53,7 +58,7 @@ class SessionCommandServiceTest {
 	class CreateSessionTest {
 
 		@Test
-		@DisplayName("성공: 현재 기수 정보로 세션이 생성되고, QR 코드도 함께 생성된다.")
+		@DisplayName("성공: 현재 기수 정보로 일정이 생성되고, QR 코드도 함께 생성된다.")
 		void success() {
 
 			// given
@@ -94,6 +99,111 @@ class SessionCommandServiceTest {
 
 			assertThat(result.qrActive()).isTrue();
 			assertThat(result.attendanceSummary().present()).isEqualTo(0);
+		}
+	}
+
+	@Nested
+	@DisplayName("일정 수정 테스트")
+	class UpdateSessionTest {
+
+		@Test
+		@DisplayName("성공: 일정을 수정하면 최신 QR 코드를 조회하여 함께 반환한다.")
+		void success_with_qr() {
+
+			// given
+			Long sessionId = 1L;
+			Cohort cohort = Cohort.builder().id(1L).generation(11).build();
+
+			SessionRequestDTO.UpdateSession request = new SessionRequestDTO.UpdateSession(
+				"수정된 제목",
+				LocalDate.of(2026, 4, 1),
+				LocalTime.of(15, 0),
+				"수정된 장소",
+				SessionStatus.IN_PROGRESS);
+
+			Session session = Session.builder()
+				.id(sessionId)
+				.title("원래 제목")
+				.cohort(cohort)
+				.status(SessionStatus.SCHEDULED)
+				.build();
+
+			Qrcode qrcode = Qrcode.builder()
+				.id(10L)
+				.session(session)
+				.expiredAt(Instant.now().plus(1, ChronoUnit.DAYS))
+				.build();
+
+			given(sessionRepository.findById(sessionId)).willReturn(Optional.of(session));
+
+			given(qrcodeRepository.findTopBySessionOrderByExpiredAtDesc(session))
+				.willReturn(Optional.of(qrcode));
+
+			// when
+			SessionResponseDTO.CreateSessionResult result = sessionCommandService.updateSession(sessionId, request);
+
+			// then
+			assertThat(result.title()).isEqualTo("수정된 제목");
+			assertThat(result.status()).isEqualTo(SessionStatus.IN_PROGRESS);
+
+			assertThat(result.qrActive()).isTrue();
+
+			verify(qrcodeRepository).findTopBySessionOrderByExpiredAtDesc(session);
+		}
+
+		@Test
+		@DisplayName("성공: QR 코드가 없는 경우(null)에도 일정 수정은 정상적으로 수행된다.")
+		void success_no_qr() {
+
+			// given
+			Long sessionId = 1L;
+			Cohort cohort = Cohort.builder().id(1L).generation(11).build();
+			SessionRequestDTO.UpdateSession request = new SessionRequestDTO.UpdateSession(
+				"수정된 제목", LocalDate.now(), LocalTime.now(), "장소", SessionStatus.COMPLETED);
+
+			Session session = Session.builder()
+				.id(sessionId)
+				.cohort(cohort)
+				.status(SessionStatus.SCHEDULED)
+				.build();
+
+			given(sessionRepository.findById(sessionId)).willReturn(Optional.of(session));
+
+			given(qrcodeRepository.findTopBySessionOrderByExpiredAtDesc(session))
+				.willReturn(Optional.empty());
+
+			// when
+			SessionResponseDTO.CreateSessionResult result = sessionCommandService.updateSession(sessionId, request);
+
+			// then
+			assertThat(result.title()).isEqualTo("수정된 제목");
+
+			assertThat(result.qrActive()).isFalse();
+		}
+
+		@Test
+		@DisplayName("실패: 이미 취소된 세션을 다시 취소하려 하면 SESSION_ALREADY_CANCELLED 예외가 발생한다.")
+		void fail_already_cancelled() {
+
+			// given
+			Long sessionId = 1L;
+			SessionRequestDTO.UpdateSession request = new SessionRequestDTO.UpdateSession(
+				"제목", LocalDate.now(), LocalTime.now(), "장소", SessionStatus.CANCELLED);
+
+			Session session = Session.builder()
+				.id(sessionId)
+				.status(SessionStatus.CANCELLED)
+				.build();
+
+			given(sessionRepository.findById(sessionId)).willReturn(Optional.of(session));
+
+			// when & then
+			assertThatThrownBy(() -> sessionCommandService.updateSession(sessionId, request))
+				.isInstanceOf(BusinessException.class)
+				.extracting("errorCode")
+				.isEqualTo(SessionErrorCode.SESSION_ALREADY_CANCELLED);
+
+			verify(qrcodeRepository, never()).findTopBySessionOrderByExpiredAtDesc(any());
 		}
 	}
 }

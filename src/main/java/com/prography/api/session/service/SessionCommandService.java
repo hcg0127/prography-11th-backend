@@ -71,10 +71,8 @@ public class SessionCommandService {
 
 		session.updateSession(request);
 
-		Qrcode qrcode = null;
-		if (session.isQrActive()) {
-			qrcode = qrcodeRepository.findTopBySessionOrderByExpiredAtDesc(session);
-		}
+		Qrcode qrcode = qrcodeRepository.findTopBySessionOrderByExpiredAtDesc(session)
+			.orElse(null);
 
 		return SessionResponseDTO.CreateSessionResult.of(session, qrcode);
 	}
