@@ -34,14 +34,14 @@ public class MemberController {
 		description = "회원의 기본 정보를 조회합니다."
 	)
 	@ApiResponses(value = {
-		@ApiResponse(responseCode = "200", description = "회원 조회 성공"),
-		@ApiResponse(responseCode = "404", description = "해당 ID의 회원이 존재하지 않음",
+		@ApiResponse(responseCode = "200", description = "성공"),
+		@ApiResponse(responseCode = "404", description = "리소스를 찾을 수 없음",
 			content = @Content(schema = @Schema(implementation = CommonResponse.ErrorDetail.class),
 				examples = @ExampleObject(
 					name = "MEMBER_NOT_FOUND",
 					summary = "회원 없음",
 					value = """
-						"errorCode": "MEMBER_NOT_FOUND",
+						"code": "MEMBER_NOT_FOUND",
 						"message": "회원을 찾을 수 없습니다."
 						"""
 				)))

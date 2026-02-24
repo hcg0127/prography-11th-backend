@@ -43,47 +43,45 @@ public class AdminMemberController {
 		description = "신규 회원을 등록하고, 기수에 배정하며, 보증금을 초기화합니다."
 	)
 	@ApiResponses(value = {
-		@ApiResponse(responseCode = "200", description = "회원 등록 성공"),
-		@ApiResponse(responseCode = "409", description = "이미 사용 중인 loginId",
+		@ApiResponse(responseCode = "200", description = "성공"),
+		@ApiResponse(responseCode = "409", description = "중복 및 충돌",
 			content = @Content(schema = @Schema(implementation = CommonResponse.ErrorDetail.class),
 				examples = @ExampleObject(
 					name = "DUPLICATE_LOGIN_ID",
-					summary = "회원 없음",
+					summary = "이미 사용 중인 loginId",
 					value = """
-						"errorCode": "DUPLICATE_LOGIN_ID",
+						"code": "DUPLICATE_LOGIN_ID",
 						"message": "이미 사용 중인 로그인 아이디입니다."
 						"""
 				))),
-		@ApiResponse(responseCode = "404", description = "cohortId에 해당하는 기수 없음",
+		@ApiResponse(responseCode = "404", description = "리소스를 찾을 수 없음",
 			content = @Content(schema = @Schema(implementation = CommonResponse.ErrorDetail.class),
-				examples = @ExampleObject(
-					name = "COHORT_NOT_FOUND",
-					summary = "기수 없음",
-					value = """
-						"errorCode": "COHORT_NOT_FOUND",
-						"message": "기수를 찾을 수 없습니다."
-						"""
-				))),
-		@ApiResponse(responseCode = "404", description = "partId에 해당하는 파트 없음",
-			content = @Content(schema = @Schema(implementation = CommonResponse.ErrorDetail.class),
-				examples = @ExampleObject(
-					name = "TEAM_NOT_FOUND",
-					summary = "팀 없음",
-					value = """
-						"errorCode": "TEAM_NOT_FOUND",
-						"message": "팀을 찾을 수 없습니다."
-						"""
-				))),
-		@ApiResponse(responseCode = "404", description = "teamId에 해당하는 팀 없음",
-			content = @Content(schema = @Schema(implementation = CommonResponse.ErrorDetail.class),
-				examples = @ExampleObject(
-					name = "PART_NOT_FOUND",
-					summary = "파트 없음",
-					value = """
-						"errorCode": "PART_NOT_FOUND",
-						"message": "파트를 찾을 수 없습니다."
-						"""
-				)))
+				examples = {
+					@ExampleObject(
+						name = "COHORT_NOT_FOUND",
+						summary = "cohortId에 해당하는 기수 없음",
+						value = """
+							"code": "COHORT_NOT_FOUND",
+							"message": "기수를 찾을 수 없습니다."
+							"""
+					),
+					@ExampleObject(
+						name = "TEAM_NOT_FOUND",
+						summary = "partId에 해당하는 파트 없음",
+						value = """
+							"code": "TEAM_NOT_FOUND",
+							"message": "팀을 찾을 수 없습니다."
+							"""
+					),
+					@ExampleObject(
+						name = "PART_NOT_FOUND",
+						summary = "teamId에 해당하는 팀 없음",
+						value = """
+							"code": "PART_NOT_FOUND",
+							"message": "파트를 찾을 수 없습니다."
+							"""
+					)
+				}))
 	})
 	public ResponseEntity<CommonResponse<MemberResponseDTO.CreateMemberResult>> createMember(
 		@Valid @RequestBody MemberRequestDTO.CreateMember request) {
@@ -97,7 +95,7 @@ public class AdminMemberController {
 		description = "회원 목록을 페이징, 필터링, 검색 조건으로 조회합니다."
 	)
 	@ApiResponses(value = {
-		@ApiResponse(responseCode = "200", description = "회원 대시보드 조회 성공")
+		@ApiResponse(responseCode = "200", description = "성공")
 	})
 	public ResponseEntity<CommonResponse<PageResponse<MemberResponseDTO.GetMemberDashboardResult>>> getMemberDashboard(
 		@ModelAttribute @Valid MemberRequestDTO.GetMemberDashboard request) {
@@ -112,14 +110,14 @@ public class AdminMemberController {
 		description = "회원의 상세 정보를 기수/파트/팀 정보와 함께 조회합니다."
 	)
 	@ApiResponses(value = {
-		@ApiResponse(responseCode = "200", description = "회원 상세 조회 성공"),
-		@ApiResponse(responseCode = "404", description = "해당 ID의 회원이 존재하지 않음",
+		@ApiResponse(responseCode = "200", description = "성공"),
+		@ApiResponse(responseCode = "404", description = "리소스를 찾을 수 없음",
 			content = @Content(schema = @Schema(implementation = CommonResponse.ErrorDetail.class),
 				examples = @ExampleObject(
 					name = "MEMBER_NOT_FOUND",
 					summary = "회원 없음",
 					value = """
-						"errorCode": "MEMBER_NOT_FOUND",
+						"code": "MEMBER_NOT_FOUND",
 						"message": "회원을 찾을 수 없습니다."
 						"""
 				)))
@@ -136,47 +134,35 @@ public class AdminMemberController {
 		description = "회원 정보를 수정합니다. 모든 필드는 optional이며, 전달된 필드만 수정됩니다."
 	)
 	@ApiResponses(value = {
-		@ApiResponse(responseCode = "200", description = "회원 수정 성공"),
-		@ApiResponse(responseCode = "404", description = "해당 ID의 회원이 존재하지 않음",
+		@ApiResponse(responseCode = "200", description = "성공"),
+		@ApiResponse(responseCode = "404", description = "리소스를 찾을 수 없음",
 			content = @Content(schema = @Schema(implementation = CommonResponse.ErrorDetail.class),
-				examples = @ExampleObject(
-					name = "MEMBER_NOT_FOUND",
-					summary = "회원 없음",
-					value = """
-						"errorCode": "MEMBER_NOT_FOUND",
-						"message": "회원을 찾을 수 없습니다."
-						"""
-				))),
-		@ApiResponse(responseCode = "404", description = "cohortId에 해당하는 기수 없음",
-			content = @Content(schema = @Schema(implementation = CommonResponse.ErrorDetail.class),
-				examples = @ExampleObject(
-					name = "COHORT_NOT_FOUND",
-					summary = "기수 없음",
-					value = """
-						"errorCode": "COHORT_NOT_FOUND",
-						"message": "기수를 찾을 수 없습니다."
-						"""
-				))),
-		@ApiResponse(responseCode = "404", description = "partId에 해당하는 파트 없음",
-			content = @Content(schema = @Schema(implementation = CommonResponse.ErrorDetail.class),
-				examples = @ExampleObject(
-					name = "TEAM_NOT_FOUND",
-					summary = "팀 없음",
-					value = """
-						"errorCode": "TEAM_NOT_FOUND",
-						"message": "팀을 찾을 수 없습니다."
-						"""
-				))),
-		@ApiResponse(responseCode = "404", description = "teamId에 해당하는 팀 없음",
-			content = @Content(schema = @Schema(implementation = CommonResponse.ErrorDetail.class),
-				examples = @ExampleObject(
-					name = "PART_NOT_FOUND",
-					summary = "파트 없음",
-					value = """
-						"errorCode": "PART_NOT_FOUND",
-						"message": "파트를 찾을 수 없습니다."
-						"""
-				)))
+				examples = {
+					@ExampleObject(
+						name = "COHORT_NOT_FOUND",
+						summary = "cohortId에 해당하는 기수 없음",
+						value = """
+							"code": "COHORT_NOT_FOUND",
+							"message": "기수를 찾을 수 없습니다."
+							"""
+					),
+					@ExampleObject(
+						name = "TEAM_NOT_FOUND",
+						summary = "partId에 해당하는 파트 없음",
+						value = """
+							"code": "TEAM_NOT_FOUND",
+							"message": "팀을 찾을 수 없습니다."
+							"""
+					),
+					@ExampleObject(
+						name = "PART_NOT_FOUND",
+						summary = "teamId에 해당하는 팀 없음",
+						value = """
+							"code": "PART_NOT_FOUND",
+							"message": "파트를 찾을 수 없습니다."
+							"""
+					)
+				}))
 	})
 	public ResponseEntity<CommonResponse<MemberResponseDTO.CreateMemberResult>> updateMemberProfile(
 		@Valid @RequestBody MemberRequestDTO.UpdateMember request,
