@@ -94,9 +94,14 @@ public class MemberQueryService {
 		Member member = memberRepository.findById(id)
 			.orElseThrow(() -> new BusinessException(MemberErrorCode.MEMBER_NOT_FOUND));
 
-		CohortMember cohortMember = cohortMemberRepository.findByMember(member);
+		CohortMember cohortMember = cohortMemberRepository.findTopByMemberOrderByIdDesc(member)
+			.orElse(null);
 
-		return MemberResponseDTO.CreateMemberResult.of(member, cohortMember.getCohort(), cohortMember.getTeam(),
-			cohortMember.getPart());
+		return MemberResponseDTO.CreateMemberResult.of(
+			member,
+			cohortMember != null ? cohortMember.getCohort() : null,
+			cohortMember != null ? cohortMember.getTeam() : null,
+			cohortMember != null ? cohortMember.getPart() : null
+		);
 	}
 }
