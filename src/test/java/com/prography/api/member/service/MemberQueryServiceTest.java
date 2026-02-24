@@ -192,4 +192,66 @@ class MemberQueryServiceTest {
 			assertThat(response.content().get(0).loginId()).isEqualTo("UserA");
 		}
 	}
+
+	@Nested
+	@DisplayName("회원 상세 조회 테스트")
+	class GetCohortMemberByIdTest {
+
+		@Test
+		@DisplayName("성공: 회원을 찾고, 연관된 기수/파트/팀 정보를 조회하여 반환한다.")
+		void success() {
+
+			// given
+			Long memberId = 1L;
+
+			Member member = Member.builder()
+				.id(memberId)
+				.loginId("testUser")
+				.name("홍길동")
+				.build();
+
+			Cohort cohort = Cohort.builder().generation(11).build();
+			Part part = Part.builder().name("SERVER").build();
+			Team team = Team.builder().name("Team A").build();
+
+			CohortMember cohortMember = CohortMember.builder()
+				.member(member)
+				.cohort(cohort)
+				.part(part)
+				.team(team)
+				.build();
+
+			given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
+			given(cohortMemberRepository.findByMember(member)).willReturn(cohortMember);
+
+			// when
+			MemberResponseDTO.CreateMemberResult result = memberQueryService.getCohortMemberById(memberId);
+
+			// then
+			assertThat(result).isNotNull();
+			assertThat(result.loginId()).isEqualTo("testUser");
+			assertThat(result.generation()).isEqualTo(11);
+			assertThat(result.partName()).isEqualTo("SERVER");
+			assertThat(result.teamName()).isEqualTo("Team A");
+
+			verify(memberRepository).findById(memberId);
+			verify(cohortMemberRepository).findByMember(member);
+		}
+
+		@Test
+		@DisplayName("실패: 존재하지 않는 회원 ID로 조회 시 MEMBER_NOT_FOUND 예외가 발생한다.")
+		void fail_member_not_found() {
+
+			// given
+			Long unknownId = 999L;
+
+			given(memberRepository.findById(unknownId)).willReturn(Optional.empty());
+
+			// when & then
+			assertThatThrownBy(() -> memberQueryService.getCohortMemberById(unknownId))
+				.isInstanceOf(BusinessException.class)
+				.extracting("errorCode")
+				.isEqualTo(MemberErrorCode.MEMBER_NOT_FOUND);
+		}
+	}
 }
