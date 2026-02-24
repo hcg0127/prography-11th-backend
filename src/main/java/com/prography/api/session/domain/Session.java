@@ -82,4 +82,8 @@ public class Session extends BaseTimeEntity {
 		if (request.status() != null)
 			this.status = request.status();
 	}
+
+	public void deleteSession() {
+		this.status = SessionStatus.CANCELLED;
+	}
 }

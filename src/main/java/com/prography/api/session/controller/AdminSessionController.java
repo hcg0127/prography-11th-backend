@@ -2,6 +2,7 @@ package com.prography.api.session.controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -78,6 +79,40 @@ public class AdminSessionController {
 		@Schema(description = "일정 ID") @PathVariable(name = "id") Long id,
 		@Valid @RequestBody SessionRequestDTO.UpdateSession request) {
 		SessionResponseDTO.CreateSessionResult result = sessionCommandService.updateSession(id, request);
+		return new ResponseEntity<>(CommonResponse.success(result), HttpStatus.OK);
+	}
+
+	@DeleteMapping("{id}")
+	@Operation(
+		summary = "일정 삭제 (취소)",
+		description = "일정을 Soft-delete 처리합니다. 실제 삭제가 아닌 상태를 CANCELLED로 변경합니다."
+	)
+	@ApiResponses(value = {
+		@ApiResponse(responseCode = "200", description = "성공"),
+		@ApiResponse(responseCode = "404", description = "리소스를 찾을 수 없음",
+			content = @Content(schema = @Schema(implementation = CommonResponse.ErrorDetail.class),
+				examples = @ExampleObject(
+					name = "SESSION_NOT_FOUND",
+					summary = "해당 ID의 일정이 존재하지 않음",
+					value = """
+						"code": "SESSION_NOT_FOUND",
+						"message": "일정을 찾을 수 없습니다."
+						"""
+				))),
+		@ApiResponse(responseCode = "400", description = "잘못된 요청",
+			content = @Content(schema = @Schema(implementation = CommonResponse.ErrorDetail.class),
+				examples = @ExampleObject(
+					name = "SESSION_ALREADY_CANCELLED",
+					summary = "이미 취소된 일정은 수정 불가",
+					value = """
+						"code": "SESSION_ALREADY_CANCELLED",
+						"message": "이미 취소된 일정입니다."
+						"""
+				)))
+	})
+	public ResponseEntity<CommonResponse<SessionResponseDTO.CreateSessionResult>> deleteSession(
+		@Schema(description = "일정 ID") @PathVariable(name = "id") Long id) {
+		SessionResponseDTO.CreateSessionResult result = sessionCommandService.deleteSession(id);
 		return new ResponseEntity<>(CommonResponse.success(result), HttpStatus.OK);
 	}
 }

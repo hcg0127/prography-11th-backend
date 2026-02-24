@@ -3,7 +3,9 @@ package com.prography.api.session.dto;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.List;
 
+import com.prography.api.attendance.domain.AttendanceStatus;
 import com.prography.api.session.domain.Qrcode;
 import com.prography.api.session.domain.Session;
 import com.prography.api.session.domain.SessionStatus;
@@ -26,7 +28,7 @@ public class SessionResponseDTO {
 		Instant createdAt,
 		Instant updatedAt
 	) {
-		public static CreateSessionResult of(Session session, Qrcode qrcode) {
+		public static CreateSessionResult of(Session session, Qrcode qrcode, AttendanceSummary attendanceSummary) {
 			return CreateSessionResult.builder()
 				.id(session.getId())
 				.cohortId(session.getCohort().getId())
@@ -35,7 +37,7 @@ public class SessionResponseDTO {
 				.time(session.getTime())
 				.location(session.getLocation())
 				.status(session.getStatus())
-				.attendanceSummary(new AttendanceSummary(0, 0, 0, 0, 0))
+				.attendanceSummary(attendanceSummary)
 				.qrActive(qrcode != null && qrcode.getExpiredAt().isAfter(Instant.now()))
 				.createdAt(session.getCreatedAt())
 				.updatedAt(session.getUpdatedAt())
@@ -52,5 +54,27 @@ public class SessionResponseDTO {
 		Integer excused,
 		Integer total
 	) {
+		public static AttendanceSummary from(List<Object[]> results, Integer total) {
+
+			Integer present = 0, absent = 0, late = 0, excused = 0;
+
+			for (Object[] result : results) {
+				AttendanceStatus status = (AttendanceStatus)result[0];
+				Integer count = (Integer)result[1];
+
+				switch (status) {
+					case PRESENT -> present = count;
+					case ABSENT -> absent = count;
+					case LATE -> late = count;
+					case EXCUSED -> excused = count;
+				}
+			}
+
+			return new AttendanceSummary(present, absent, late, excused, total);
+		}
+
+		public static AttendanceSummary empty() {
+			return new AttendanceSummary(0, 0, 0, 0, 0);
+		}
 	}
 }

@@ -8,6 +8,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Collections;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -21,6 +22,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import com.prography.api.attendance.repository.AttendanceRepository;
 import com.prography.api.cohort.domain.Cohort;
 import com.prography.api.cohort.repository.CohortRepository;
 import com.prography.api.global.error.BusinessException;
@@ -44,6 +46,9 @@ class SessionCommandServiceTest {
 
 	@Mock
 	private QrcodeRepository qrcodeRepository;
+
+	@Mock
+	private AttendanceRepository attendanceRepository;
 
 	@InjectMocks
 	private SessionCommandService sessionCommandService;
@@ -77,6 +82,9 @@ class SessionCommandServiceTest {
 				ReflectionTestUtils.setField(s, "id", 100L);
 				return s;
 			});
+
+			given(attendanceRepository.countByStatusBySessionId(any())).willReturn(Collections.emptyList());
+			given(attendanceRepository.countBySessionId(any())).willReturn(0);
 
 			// when
 			SessionResponseDTO.CreateSessionResult result = sessionCommandService.createSession(request);
@@ -139,6 +147,9 @@ class SessionCommandServiceTest {
 			given(qrcodeRepository.findTopBySessionOrderByExpiredAtDesc(session))
 				.willReturn(Optional.of(qrcode));
 
+			given(attendanceRepository.countByStatusBySessionId(any())).willReturn(Collections.emptyList());
+			given(attendanceRepository.countBySessionId(any())).willReturn(0);
+
 			// when
 			SessionResponseDTO.CreateSessionResult result = sessionCommandService.updateSession(sessionId, request);
 
@@ -172,6 +183,9 @@ class SessionCommandServiceTest {
 			given(qrcodeRepository.findTopBySessionOrderByExpiredAtDesc(session))
 				.willReturn(Optional.empty());
 
+			given(attendanceRepository.countByStatusBySessionId(any())).willReturn(Collections.emptyList());
+			given(attendanceRepository.countBySessionId(any())).willReturn(0);
+
 			// when
 			SessionResponseDTO.CreateSessionResult result = sessionCommandService.updateSession(sessionId, request);
 
@@ -204,6 +218,7 @@ class SessionCommandServiceTest {
 				.isEqualTo(SessionErrorCode.SESSION_ALREADY_CANCELLED);
 
 			verify(qrcodeRepository, never()).findTopBySessionOrderByExpiredAtDesc(any());
+			verify(attendanceRepository, never()).countByStatusBySessionId(any());
 		}
 	}
 }
