@@ -65,4 +65,11 @@ public class CohortMember extends BaseTimeEntity {
 	@OneToMany(mappedBy = "cohortMember", cascade = CascadeType.ALL, orphanRemoval = true)
 	@Builder.Default
 	private List<DepositHistory> depositHistoryList = new ArrayList<>();
+
+	public void updateAssignment(Part part, Team team) {
+		if (part != null)
+			this.part = part;
+		if (team != null)
+			this.team = team;
+	}
 }

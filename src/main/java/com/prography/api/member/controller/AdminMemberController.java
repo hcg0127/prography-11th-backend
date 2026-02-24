@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -129,4 +130,58 @@ public class AdminMemberController {
 		return new ResponseEntity<>(CommonResponse.success(result), HttpStatus.OK);
 	}
 
+	@PutMapping("{id}")
+	@Operation(
+		summary = "회원 수정",
+		description = "회원 정보를 수정합니다. 모든 필드는 optional이며, 전달된 필드만 수정됩니다."
+	)
+	@ApiResponses(value = {
+		@ApiResponse(responseCode = "200", description = "회원 수정 성공"),
+		@ApiResponse(responseCode = "404", description = "해당 ID의 회원이 존재하지 않음",
+			content = @Content(schema = @Schema(implementation = CommonResponse.ErrorDetail.class),
+				examples = @ExampleObject(
+					name = "MEMBER_NOT_FOUND",
+					summary = "회원 없음",
+					value = """
+						"errorCode": "MEMBER_NOT_FOUND",
+						"message": "회원을 찾을 수 없습니다."
+						"""
+				))),
+		@ApiResponse(responseCode = "404", description = "cohortId에 해당하는 기수 없음",
+			content = @Content(schema = @Schema(implementation = CommonResponse.ErrorDetail.class),
+				examples = @ExampleObject(
+					name = "COHORT_NOT_FOUND",
+					summary = "기수 없음",
+					value = """
+						"errorCode": "COHORT_NOT_FOUND",
+						"message": "기수를 찾을 수 없습니다."
+						"""
+				))),
+		@ApiResponse(responseCode = "404", description = "partId에 해당하는 파트 없음",
+			content = @Content(schema = @Schema(implementation = CommonResponse.ErrorDetail.class),
+				examples = @ExampleObject(
+					name = "TEAM_NOT_FOUND",
+					summary = "팀 없음",
+					value = """
+						"errorCode": "TEAM_NOT_FOUND",
+						"message": "팀을 찾을 수 없습니다."
+						"""
+				))),
+		@ApiResponse(responseCode = "404", description = "teamId에 해당하는 팀 없음",
+			content = @Content(schema = @Schema(implementation = CommonResponse.ErrorDetail.class),
+				examples = @ExampleObject(
+					name = "PART_NOT_FOUND",
+					summary = "파트 없음",
+					value = """
+						"errorCode": "PART_NOT_FOUND",
+						"message": "파트를 찾을 수 없습니다."
+						"""
+				)))
+	})
+	public ResponseEntity<CommonResponse<MemberResponseDTO.CreateMemberResult>> updateMemberProfile(
+		@Valid @RequestBody MemberRequestDTO.UpdateMember request,
+		@Schema(description = "회원 ID") @PathVariable(name = "id") Long id) {
+		MemberResponseDTO.CreateMemberResult result = memberCommandService.updateMemberProfile(request, id);
+		return new ResponseEntity<>(CommonResponse.success(result), HttpStatus.OK);
+	}
 }

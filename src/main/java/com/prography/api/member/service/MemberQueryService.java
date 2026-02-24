@@ -9,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.prography.api.cohort.service.CohortManager;
 import com.prography.api.global.common.PageResponse;
 import com.prography.api.global.error.BusinessException;
 import com.prography.api.member.domain.CohortMember;
@@ -30,6 +31,7 @@ public class MemberQueryService {
 
 	private final MemberRepository memberRepository;
 	private final CohortMemberRepository cohortMemberRepository;
+	private final CohortManager cohortManager;
 
 	public MemberResponseDTO.MemberProfile getMemberById(Long id) {
 

@@ -61,7 +61,7 @@ public class MemberResponseDTO {
 				member.getPhone(),
 				member.getStatus(),
 				member.getRole(),
-				cohort.getGeneration(),
+				cohort != null ? cohort.getGeneration() : null,
 				part != null ? part.getName() : null,
 				team != null ? team.getName() : null,
 				member.getCreatedAt(),

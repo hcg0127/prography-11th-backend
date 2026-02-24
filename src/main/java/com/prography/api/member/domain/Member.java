@@ -49,4 +49,11 @@ public class Member extends BaseTimeEntity {
 	@Column(nullable = false)
 	@Builder.Default
 	private MemberRole role = MemberRole.MEMBER;
+
+	public void updateProfile(String name, String phone) {
+		if (name != null)
+			this.name = name;
+		if (phone != null)
+			this.phone = phone;
+	}
 }

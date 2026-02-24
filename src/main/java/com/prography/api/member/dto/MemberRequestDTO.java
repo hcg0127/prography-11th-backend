@@ -84,4 +84,22 @@ public class MemberRequestDTO {
 			return PageRequest.of(initPage(), initSize(), Sort.by(Sort.Direction.DESC, "createdAt"));
 		}
 	}
+
+	public record UpdateMember(
+		@Schema(description = "변경할 이름", example = "새이름")
+		String name,
+
+		@Schema(description = "변경할 전화번호", example = "010-9999-9999")
+		String phone,
+
+		@Schema(description = "변경할 기수 ID", example = "2")
+		Long cohortId,
+
+		@Schema(description = "변경할 파트 ID", example = "7")
+		Long partId,
+
+		@Schema(description = "변경할 팀 ID", example = "2")
+		Long teamId
+	) {
+	}
 }

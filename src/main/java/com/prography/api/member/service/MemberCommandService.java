@@ -19,6 +19,7 @@ import com.prography.api.member.domain.Member;
 import com.prography.api.member.dto.MemberRequestDTO;
 import com.prography.api.member.dto.MemberResponseDTO;
 import com.prography.api.member.exception.AuthErrorCode;
+import com.prography.api.member.exception.MemberErrorCode;
 import com.prography.api.member.repository.CohortMemberRepository;
 import com.prography.api.member.repository.MemberRepository;
 
@@ -45,20 +46,9 @@ public class MemberCommandService {
 			throw new BusinessException(AuthErrorCode.DUPLICATED_LOGIN_ID);
 		}
 
-		Cohort cohort = cohortRepository.findById(request.cohortId())
-			.orElseThrow(() -> new BusinessException(CohortErrorCode.COHORT_NOT_FOUND));
-
-		Part part = null;
-		if (request.partId() != null) {
-			part = partRepository.findById(request.partId())
-				.orElseThrow(() -> new BusinessException(CohortErrorCode.PART_NOT_FOUND));
-		}
-
-		Team team = null;
-		if (request.teamId() != null) {
-			team = teamRepository.findById(request.teamId())
-				.orElseThrow(() -> new BusinessException(CohortErrorCode.TEAM_NOT_FOUND));
-		}
+		Cohort cohort = getCohortOrThrow(request.cohortId());
+		Part part = (request.partId() != null) ? getPartOrThrow(request.partId()) : null;
+		Team team = (request.teamId() != null) ? getTeamOrThrow(request.teamId()) : null;
 
 		String encodedPassword = passwordEncoder.encode(request.password());
 
@@ -85,5 +75,65 @@ public class MemberCommandService {
 		depositHistoryRepository.save(depositHistory);
 
 		return MemberResponseDTO.CreateMemberResult.of(member, cohort, team, part);
+	}
+
+	private Team getTeamOrThrow(Long id) {
+		return teamRepository.findById(id)
+			.orElseThrow(() -> new BusinessException(CohortErrorCode.TEAM_NOT_FOUND));
+	}
+
+	private Part getPartOrThrow(Long id) {
+		return partRepository.findById(id)
+			.orElseThrow(() -> new BusinessException(CohortErrorCode.PART_NOT_FOUND));
+	}
+
+	private Cohort getCohortOrThrow(Long id) {
+		return cohortRepository.findById(id)
+			.orElseThrow(() -> new BusinessException(CohortErrorCode.COHORT_NOT_FOUND));
+	}
+
+	public MemberResponseDTO.CreateMemberResult updateMemberProfile(MemberRequestDTO.UpdateMember request, Long id) {
+
+		Member member = memberRepository.findById(id)
+			.orElseThrow(() -> new BusinessException(MemberErrorCode.MEMBER_NOT_FOUND));
+
+		member.updateProfile(request.name(), request.phone());
+
+		CohortMember cohortMember = null;
+
+		if (request.cohortId() != null) {
+			cohortMember = handleCohortAssignment(member, request);
+		} else {
+			cohortMember = cohortMemberRepository.findTopByMemberOrderByIdDesc(member)
+				.orElse(null);
+		}
+
+		return MemberResponseDTO.CreateMemberResult.of(
+			member,
+			cohortMember != null ? cohortMember.getCohort() : null,
+			cohortMember != null ? cohortMember.getTeam() : null,
+			cohortMember != null ? cohortMember.getPart() : null
+		);
+	}
+
+	private CohortMember handleCohortAssignment(Member member, MemberRequestDTO.UpdateMember request) {
+
+		Cohort cohort = getCohortOrThrow(request.cohortId());
+		Part part = (request.partId() != null) ? getPartOrThrow(request.partId()) : null;
+		Team team = (request.teamId() != null) ? getTeamOrThrow(request.teamId()) : null;
+
+		return cohortMemberRepository.findByMemberAndCohort(member, cohort)
+			.map(existing -> {
+				existing.updateAssignment(part, team);
+				return existing;
+			})
+			.orElseGet(() -> cohortMemberRepository.save(
+				CohortMember.builder()
+					.member(member)
+					.cohort(cohort)
+					.team(team)
+					.part(part)
+					.build()
+			));
 	}
 }
