@@ -57,3 +57,9 @@ clean {
 jar {
     enabled = false
 }
+
+test {
+    useJUnitPlatform()
+
+    jvmArgs('-XX:+EnableDynamicAgentLoading')
+}
