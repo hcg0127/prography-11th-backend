@@ -29,7 +29,6 @@ import lombok.extern.slf4j.Slf4j;
 public class MemberQueryService {
 
 	private final MemberRepository memberRepository;
-	private final CohortMemberRepository cmRepository;
 	private final CohortMemberRepository cohortMemberRepository;
 
 	public MemberResponseDTO.MemberProfile getMemberById(Long id) {
@@ -86,5 +85,16 @@ public class MemberQueryService {
 		if (teamName == null || teamName.isBlank())
 			return true;
 		return cm.getTeam() != null && cm.getTeam().getName().equals(teamName);
+	}
+
+	public MemberResponseDTO.CreateMemberResult getCohortMemberById(Long id) {
+
+		Member member = memberRepository.findById(id)
+			.orElseThrow(() -> new BusinessException(MemberErrorCode.MEMBER_NOT_FOUND));
+
+		CohortMember cohortMember = cohortMemberRepository.findByMember(member);
+
+		return MemberResponseDTO.CreateMemberResult.of(member, cohortMember.getCohort(), cohortMember.getTeam(),
+			cohortMember.getPart());
 	}
 }

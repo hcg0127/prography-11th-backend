@@ -4,6 +4,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -103,4 +104,29 @@ public class AdminMemberController {
 			request);
 		return new ResponseEntity<>(CommonResponse.success(result), HttpStatus.OK);
 	}
+
+	@GetMapping("/{id}")
+	@Operation(
+		summary = "회원 상세 조회",
+		description = "회원의 상세 정보를 기수/파트/팀 정보와 함께 조회합니다."
+	)
+	@ApiResponses(value = {
+		@ApiResponse(responseCode = "200", description = "회원 상세 조회 성공"),
+		@ApiResponse(responseCode = "404", description = "해당 ID의 회원이 존재하지 않음",
+			content = @Content(schema = @Schema(implementation = CommonResponse.ErrorDetail.class),
+				examples = @ExampleObject(
+					name = "MEMBER_NOT_FOUND",
+					summary = "회원 없음",
+					value = """
+						"errorCode": "MEMBER_NOT_FOUND",
+						"message": "회원을 찾을 수 없습니다."
+						"""
+				)))
+	})
+	public ResponseEntity<CommonResponse<MemberResponseDTO.CreateMemberResult>> getCohortMemberById(
+		@Schema(description = "회원 ID") @PathVariable(name = "id") Long id) {
+		MemberResponseDTO.CreateMemberResult result = memberQueryService.getCohortMemberById(id);
+		return new ResponseEntity<>(CommonResponse.success(result), HttpStatus.OK);
+	}
+
 }
