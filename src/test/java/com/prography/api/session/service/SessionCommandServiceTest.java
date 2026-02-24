@@ -83,9 +83,6 @@ class SessionCommandServiceTest {
 				return s;
 			});
 
-			given(attendanceRepository.countByStatusBySessionId(any())).willReturn(Collections.emptyList());
-			given(attendanceRepository.countBySessionId(any())).willReturn(0);
-
 			// when
 			SessionResponseDTO.CreateSessionResult result = sessionCommandService.createSession(request);
 
@@ -196,7 +193,29 @@ class SessionCommandServiceTest {
 		}
 
 		@Test
-		@DisplayName("실패: 이미 취소된 세션을 다시 취소하려 하면 SESSION_ALREADY_CANCELLED 예외가 발생한다.")
+		@DisplayName("실패: 해당 ID의 일정이 존재하지 않으면 SESSION_NOT_FOUND(404) 에러가 발생한다.")
+		void fail_session_not_found() {
+
+			// given
+			Long unknownId = 999L;
+			SessionRequestDTO.UpdateSession request = new SessionRequestDTO.UpdateSession(
+				"수정 시도", LocalDate.now(), LocalTime.now(), "장소", SessionStatus.IN_PROGRESS);
+
+			given(sessionRepository.findById(unknownId)).willReturn(Optional.empty());
+
+			// when & then
+			assertThatThrownBy(() -> sessionCommandService.updateSession(unknownId, request))
+				.isInstanceOf(BusinessException.class)
+				.extracting("errorCode")
+				.isEqualTo(SessionErrorCode.SESSION_NOT_FOUND);
+
+			verify(qrcodeRepository, never()).findTopBySessionOrderByExpiredAtDesc(any());
+			verify(attendanceRepository, never()).countByStatusBySessionId(any());
+			verify(attendanceRepository, never()).countBySessionId(any());
+		}
+
+		@Test
+		@DisplayName("실패: 이미 취소된 일정을 다시 취소하려 하면 SESSION_ALREADY_CANCELLED 예외가 발생한다.")
 		void fail_already_cancelled() {
 
 			// given
@@ -218,6 +237,75 @@ class SessionCommandServiceTest {
 				.isEqualTo(SessionErrorCode.SESSION_ALREADY_CANCELLED);
 
 			verify(qrcodeRepository, never()).findTopBySessionOrderByExpiredAtDesc(any());
+			verify(attendanceRepository, never()).countByStatusBySessionId(any());
+		}
+	}
+
+	@Nested
+	@DisplayName("일정 삭제(취소) 테스트")
+	class DeleteSessionTest {
+
+		@Test
+		@DisplayName("성공: SCHEDULED 상태인 일정을 삭제하면 CANCELLED로 변경된다.")
+		void success() {
+
+			// given
+			Long sessionId = 1L;
+			Cohort cohort = Cohort.builder().id(1L).generation(11).build();
+			Session session = Session.builder()
+				.id(sessionId).cohort(cohort).status(SessionStatus.SCHEDULED).build();
+
+			given(sessionRepository.findById(sessionId)).willReturn(Optional.of(session));
+
+			given(qrcodeRepository.findTopBySessionOrderByExpiredAtDesc(session)).willReturn(Optional.empty());
+			given(attendanceRepository.countByStatusBySessionId(sessionId)).willReturn(Collections.emptyList());
+			given(attendanceRepository.countBySessionId(sessionId)).willReturn(0);
+
+			// when
+			SessionResponseDTO.CreateSessionResult result = sessionCommandService.deleteSession(sessionId);
+
+			// then
+			assertThat(result.status()).isEqualTo(SessionStatus.CANCELLED);
+			verify(sessionRepository).findById(sessionId);
+		}
+
+		@Test
+		@DisplayName("실패: 해당 ID의 일정이 존재하지 않으면 SESSION_NOT_FOUND(404) 에러가 발생한다.")
+		void fail_session_not_found() {
+
+			// given
+			Long unknownId = 99L;
+			given(sessionRepository.findById(unknownId)).willReturn(Optional.empty());
+
+			// when & then
+			assertThatThrownBy(() -> sessionCommandService.deleteSession(unknownId))
+				.isInstanceOf(BusinessException.class)
+				.extracting("errorCode")
+				.isEqualTo(SessionErrorCode.SESSION_NOT_FOUND);
+
+			verify(attendanceRepository, never()).countByStatusBySessionId(any());
+		}
+
+		@Test
+		@DisplayName("실패: 이미 취소된(CANCELLED) 상태의 일정을 삭제하려 하면 SESSION_ALREADY_CANCELLED(400) 에러가 발생한다.")
+		void fail_already_cancelled() {
+
+			// given
+			Long sessionId = 1L;
+
+			Session alreadyCancelledSession = Session.builder()
+				.id(sessionId)
+				.status(SessionStatus.CANCELLED)
+				.build();
+
+			given(sessionRepository.findById(sessionId)).willReturn(Optional.of(alreadyCancelledSession));
+
+			// when & then
+			assertThatThrownBy(() -> sessionCommandService.deleteSession(sessionId))
+				.isInstanceOf(BusinessException.class)
+				.extracting("errorCode")
+				.isEqualTo(SessionErrorCode.SESSION_ALREADY_CANCELLED);
+
 			verify(attendanceRepository, never()).countByStatusBySessionId(any());
 		}
 	}
