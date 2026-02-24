@@ -39,6 +39,9 @@ public class Cohort extends BaseTimeEntity {
 	@Column(nullable = false, unique = true)
 	private String name;
 
+	@Column(nullable = false)
+	private boolean active;
+
 	@OneToMany(mappedBy = "cohort", cascade = CascadeType.ALL, orphanRemoval = true)
 	@Builder.Default
 	private List<Session> sessionList = new ArrayList<>();
@@ -54,4 +57,12 @@ public class Cohort extends BaseTimeEntity {
 	@OneToMany(mappedBy = "cohort", cascade = CascadeType.ALL, orphanRemoval = true)
 	@Builder.Default
 	private List<Team> teamList = new ArrayList<>();
+
+	public void activate() {
+		this.active = true;
+	}
+
+	public void deactivate() {
+		this.active = false;
+	}
 }
