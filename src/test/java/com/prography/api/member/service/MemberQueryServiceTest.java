@@ -26,7 +26,6 @@ class MemberQueryServiceTest {
 
 	@Mock
 	private MemberRepository memberRepository;
-
 	@InjectMocks
 	private MemberQueryService memberQueryService;
 

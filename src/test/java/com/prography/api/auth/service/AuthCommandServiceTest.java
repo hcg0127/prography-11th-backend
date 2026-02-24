@@ -27,10 +27,8 @@ class AuthCommandServiceTest {
 
 	@Mock
 	private MemberRepository memberRepository;
-
 	@Mock
 	private PasswordEncoder passwordEncoder;
-
 	@InjectMocks
 	private AuthCommandService authCommandService;
 
