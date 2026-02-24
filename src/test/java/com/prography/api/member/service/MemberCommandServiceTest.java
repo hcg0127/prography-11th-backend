@@ -26,6 +26,7 @@ import com.prography.api.cohort.repository.TeamRepository;
 import com.prography.api.global.error.BusinessException;
 import com.prography.api.member.domain.CohortMember;
 import com.prography.api.member.domain.Member;
+import com.prography.api.member.domain.MemberStatus;
 import com.prography.api.member.dto.MemberRequestDTO;
 import com.prography.api.member.dto.MemberResponseDTO;
 import com.prography.api.member.exception.AuthErrorCode;
@@ -294,4 +295,69 @@ class MemberCommandServiceTest {
 		}
 	}
 
+	@Nested
+	@DisplayName("회원 탈퇴 테스트")
+	class DeleteMemberTest {
+
+		@Test
+		@DisplayName("성공: 정상 상태인 회원은 탈퇴(WITHDRAWN) 상태로 변경된다.")
+		void success() {
+
+			// given
+			Long memberId = 1L;
+
+			Member member = Member.builder()
+				.id(memberId)
+				.status(MemberStatus.ACTIVE)
+				.build();
+
+			given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
+
+			// when
+			MemberResponseDTO.DeleteMemberResult result = memberCommandService.deleteMember(memberId);
+
+			// then
+			assertThat(member.getStatus()).isEqualTo(MemberStatus.WITHDRAWN);
+
+			// 2. 반환된 결과 확인
+			assertThat(result).isNotNull();
+		}
+
+		@Test
+		@DisplayName("실패: 이미 탈퇴한 회원은 MEMBER_ALREADY_WITHDRAWN 예외가 발생한다.")
+		void fail_already_withdrawn() {
+
+			// given
+			Long memberId = 1L;
+
+			Member withdrawnMember = Member.builder()
+				.id(memberId)
+				.status(MemberStatus.WITHDRAWN)
+				.build();
+
+			given(memberRepository.findById(memberId)).willReturn(Optional.of(withdrawnMember));
+
+			// when & then
+			assertThatThrownBy(() -> memberCommandService.deleteMember(memberId))
+				.isInstanceOf(BusinessException.class)
+				.extracting("errorCode")
+				.isEqualTo(MemberErrorCode.MEMBER_ALREADY_WITHDRAWN);
+		}
+
+		@Test
+		@DisplayName("실패: 존재하지 않는 회원은 MEMBER_NOT_FOUND 예외가 발생한다.")
+		void fail_member_not_found() {
+
+			// given
+			Long unknownId = 999L;
+
+			given(memberRepository.findById(unknownId)).willReturn(Optional.empty());
+
+			// when & then
+			assertThatThrownBy(() -> memberCommandService.deleteMember(unknownId))
+				.isInstanceOf(BusinessException.class)
+				.extracting("errorCode")
+				.isEqualTo(MemberErrorCode.MEMBER_NOT_FOUND);
+		}
+	}
 }
