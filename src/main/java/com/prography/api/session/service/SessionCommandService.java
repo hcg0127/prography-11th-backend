@@ -1,5 +1,7 @@
 package com.prography.api.session.service;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -46,6 +48,7 @@ public class SessionCommandService {
 		Qrcode qrcode = Qrcode.builder()
 			.hashValue(UUID.randomUUID().toString())
 			.session(session)
+			.expiredAt(Instant.now().plus(1, ChronoUnit.DAYS))
 			.build();
 
 		sessionRepository.save(session);
