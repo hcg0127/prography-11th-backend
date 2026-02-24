@@ -38,12 +38,15 @@ public class DepositHistory extends BaseTimeEntity {
 	private DepositType type = DepositType.INITIAL;
 
 	@Column(nullable = false)
-	private int amount;
+	@Builder.Default
+	private int amount = 100000;
 
 	@Column(nullable = false)
-	private int balanceAfter;
+	@Builder.Default
+	private int balanceAfter = 100000;
 
-	private String description;
+	@Builder.Default
+	private String description = "초기 보증금";
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "cohort_member_id")

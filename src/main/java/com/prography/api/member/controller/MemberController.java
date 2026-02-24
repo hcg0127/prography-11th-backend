@@ -23,7 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/member")
+@RequestMapping("/members")
 public class MemberController {
 
 	private final MemberQueryService memberQueryService;
@@ -35,7 +35,7 @@ public class MemberController {
 	)
 	@ApiResponses(value = {
 		@ApiResponse(responseCode = "200", description = "회원 조회 성공"),
-		@ApiResponse(responseCode = "404", description = "회원 조회 실패",
+		@ApiResponse(responseCode = "404", description = "해당 ID의 회원이 존재하지 않음",
 			content = @Content(schema = @Schema(implementation = CommonResponse.ErrorDetail.class),
 				examples = @ExampleObject(
 					name = "MEMBER_NOT_FOUND",
