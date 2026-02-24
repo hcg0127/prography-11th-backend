@@ -2,15 +2,19 @@ package com.prography.api.member.controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.prography.api.global.common.CommonResponse;
+import com.prography.api.global.common.PageResponse;
 import com.prography.api.member.dto.MemberRequestDTO;
 import com.prography.api.member.dto.MemberResponseDTO;
 import com.prography.api.member.service.MemberCommandService;
+import com.prography.api.member.service.MemberQueryService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -29,6 +33,7 @@ import lombok.extern.slf4j.Slf4j;
 public class AdminMemberController {
 
 	private final MemberCommandService memberCommandService;
+	private final MemberQueryService memberQueryService;
 
 	@PostMapping()
 	@Operation(
@@ -82,5 +87,20 @@ public class AdminMemberController {
 		@Valid @RequestBody MemberRequestDTO.CreateMember request) {
 		MemberResponseDTO.CreateMemberResult result = memberCommandService.createMember(request);
 		return new ResponseEntity<>(CommonResponse.success(result), HttpStatus.CREATED);
+	}
+
+	@GetMapping()
+	@Operation(
+		summary = "회원 대시보드 조회",
+		description = "회원 목록을 페이징, 필터링, 검색 조건으로 조회합니다."
+	)
+	@ApiResponses(value = {
+		@ApiResponse(responseCode = "200", description = "회원 대시보드 조회 성공")
+	})
+	public ResponseEntity<CommonResponse<PageResponse<MemberResponseDTO.GetMemberDashboardResult>>> getMemberDashboard(
+		@ModelAttribute @Valid MemberRequestDTO.GetMemberDashboard request) {
+		PageResponse<MemberResponseDTO.GetMemberDashboardResult> result = memberQueryService.getMemberDashboard(
+			request);
+		return new ResponseEntity<>(CommonResponse.success(result), HttpStatus.OK);
 	}
 }

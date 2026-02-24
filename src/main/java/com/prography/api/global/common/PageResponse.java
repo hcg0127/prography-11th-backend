@@ -15,7 +15,7 @@ public record PageResponse<T>(
 	int totalPages
 ) {
 
-	public static <T> PageResponse<T> of(Page<T> pageData) {
+	public static <T> PageResponse<T> from(Page<T> pageData) {
 		return new PageResponse<>(
 			pageData.getContent(),
 			pageData.getNumber(),

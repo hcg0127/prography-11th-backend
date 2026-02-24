@@ -40,11 +40,11 @@ public class CohortMember extends BaseTimeEntity {
 
 	@Column(nullable = false)
 	@Builder.Default
-	private int excuseCount = 0;
+	private Integer excuseCount = 0;
 
 	@Column(nullable = false)
 	@Builder.Default
-	private int deposit = 100000;
+	private Integer deposit = 100000;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "member_id")

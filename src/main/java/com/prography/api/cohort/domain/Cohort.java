@@ -34,7 +34,7 @@ public class Cohort extends BaseTimeEntity {
 	private Long id;
 
 	@Column(nullable = false, unique = true)
-	private int generation;
+	private Integer generation;
 
 	@Column(nullable = false, unique = true)
 	private String name;

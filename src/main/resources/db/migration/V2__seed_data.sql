@@ -26,13 +26,28 @@ FROM COHORTS C
 WHERE C.generation = 11
   AND NOT EXISTS (SELECT 1 FROM TEAMS WHERE cohort_id = C.id AND name = T.name);
 
--- 기수 회원
-INSERT INTO COHORT_MEMBERS (cohort_id, member_id, deposit, excuse_count, created_at, updated_at)
-SELECT C.id, M.id, 100000, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+-- 기수 회원 (수정본)
+INSERT INTO COHORT_MEMBERS (cohort_id, member_id, deposit, excuse_count, created_at, updated_at, PART_ID, TEAM_ID)
+SELECT C.id,
+       M.id,
+       100000,
+       0,
+       CURRENT_TIMESTAMP,
+       CURRENT_TIMESTAMP,
+       P.ID,
+       T.ID
 FROM COHORTS C,
-     MEMBERS M
+     MEMBERS M,
+     TEAMS T,
+     PARTS P
 WHERE C.generation = 11
   AND M.login_id = 'admin'
+  -- 👇 [수정된 부분] 파트와 팀을 명확히 지정하고 기수와 연결합니다.
+  AND P.cohort_id = C.id
+  AND P.name = 'SERVER' -- 원하시는 파트명으로 변경 (예: SERVER)
+  AND T.cohort_id = C.id
+  AND T.name = 'Team A' -- 원하시는 팀명으로 변경 (예: Team A)
+  -- 👆 여기까지 추가
   AND NOT EXISTS (SELECT 1 FROM COHORT_MEMBERS WHERE cohort_id = C.id AND member_id = M.id);
 
 -- 보증금 이력
