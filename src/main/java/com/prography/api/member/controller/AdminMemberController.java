@@ -44,7 +44,7 @@ public class AdminMemberController {
 		description = "신규 회원을 등록하고, 기수에 배정하며, 보증금을 초기화합니다."
 	)
 	@ApiResponses(value = {
-		@ApiResponse(responseCode = "200", description = "성공"),
+		@ApiResponse(responseCode = "201", description = "생성"),
 		@ApiResponse(responseCode = "409", description = "중복 및 충돌",
 			content = @Content(schema = @Schema(implementation = CommonResponse.ErrorDetail.class),
 				examples = @ExampleObject(

@@ -1,4 +1,7 @@
 spring:
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
   application:
     name: api
   datasource:
@@ -28,3 +31,6 @@ logging:
 springdoc:
   swagger-ui:
     path: /docs
+app:
+  current-cohort:
+    generation: 11

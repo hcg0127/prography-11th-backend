@@ -10,4 +10,5 @@ public interface CohortRepository extends JpaRepository<Cohort, Long>, CohortRep
 
 	Optional<Cohort> findFirstByActiveTrue();
 
+	Cohort findByGeneration(Integer currentGeneration);
 }
