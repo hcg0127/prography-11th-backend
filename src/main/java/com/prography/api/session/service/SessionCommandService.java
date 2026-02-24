@@ -10,10 +10,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.prography.api.cohort.domain.Cohort;
 import com.prography.api.cohort.repository.CohortRepository;
+import com.prography.api.global.error.BusinessException;
 import com.prography.api.session.domain.Qrcode;
 import com.prography.api.session.domain.Session;
+import com.prography.api.session.domain.SessionStatus;
 import com.prography.api.session.dto.SessionRequestDTO;
 import com.prography.api.session.dto.SessionResponseDTO;
+import com.prography.api.session.exception.SessionErrorCode;
 import com.prography.api.session.repository.QrcodeRepository;
 import com.prography.api.session.repository.SessionRepository;
 
@@ -53,6 +56,25 @@ public class SessionCommandService {
 
 		sessionRepository.save(session);
 		qrcodeRepository.save(qrcode);
+
+		return SessionResponseDTO.CreateSessionResult.of(session, qrcode);
+	}
+
+	public SessionResponseDTO.CreateSessionResult updateSession(Long id, SessionRequestDTO.UpdateSession request) {
+
+		Session session = sessionRepository.findById(id)
+			.orElseThrow(() -> new BusinessException(SessionErrorCode.SESSION_NOT_FOUND));
+
+		if (session.getStatus() == SessionStatus.CANCELLED && request.status() == SessionStatus.CANCELLED) {
+			throw new BusinessException(SessionErrorCode.SESSION_ALREADY_CANCELLED);
+		}
+
+		session.updateSession(request);
+
+		Qrcode qrcode = null;
+		if (session.isQrActive()) {
+			qrcode = qrcodeRepository.findTopBySessionOrderByExpiredAtDesc(session);
+		}
 
 		return SessionResponseDTO.CreateSessionResult.of(session, qrcode);
 	}

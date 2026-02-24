@@ -8,6 +8,7 @@ import java.util.List;
 import com.prography.api.attendance.domain.Attendance;
 import com.prography.api.cohort.domain.Cohort;
 import com.prography.api.global.common.BaseTimeEntity;
+import com.prography.api.session.dto.SessionRequestDTO;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -72,4 +73,17 @@ public class Session extends BaseTimeEntity {
 	@OneToMany(mappedBy = "session", cascade = CascadeType.ALL, orphanRemoval = true)
 	@Builder.Default
 	private List<Attendance> attendanceList = new ArrayList<>();
+
+	public void updateSession(SessionRequestDTO.UpdateSession request) {
+		if (request.title() != null)
+			this.title = request.title();
+		if (request.date() != null)
+			this.date = request.date();
+		if (request.time() != null)
+			this.time = request.time();
+		if (request.location() != null)
+			this.location = request.location();
+		if (request.status() != null)
+			this.status = request.status();
+	}
 }

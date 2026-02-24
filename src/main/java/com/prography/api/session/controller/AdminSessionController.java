@@ -2,7 +2,9 @@ package com.prography.api.session.controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -13,6 +15,9 @@ import com.prography.api.session.dto.SessionResponseDTO;
 import com.prography.api.session.service.SessionCommandService;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
@@ -41,4 +46,38 @@ public class AdminSessionController {
 		return new ResponseEntity<>(CommonResponse.success(result), HttpStatus.CREATED);
 	}
 
+	@PutMapping("{id}")
+	@Operation(
+		summary = "일정 수정",
+		description = "일정 정보를 수정합니다. 모든 필드는 optional이며, 전달된 필드만 수정됩니다."
+	)
+	@ApiResponses(value = {
+		@ApiResponse(responseCode = "200", description = "성공"),
+		@ApiResponse(responseCode = "404", description = "리소스를 찾을 수 없음",
+			content = @Content(schema = @Schema(implementation = CommonResponse.ErrorDetail.class),
+				examples = @ExampleObject(
+					name = "SESSION_NOT_FOUND",
+					summary = "해당 ID의 일정이 존재하지 않음",
+					value = """
+						"code": "SESSION_NOT_FOUND",
+						"message": "일정을 찾을 수 없습니다."
+						"""
+				))),
+		@ApiResponse(responseCode = "400", description = "잘못된 요청",
+			content = @Content(schema = @Schema(implementation = CommonResponse.ErrorDetail.class),
+				examples = @ExampleObject(
+					name = "SESSION_ALREADY_CANCELLED",
+					summary = "이미 취소된 일정은 수정 불가",
+					value = """
+						"code": "SESSION_ALREADY_CANCELLED",
+						"message": "이미 취소된 일정입니다."
+						"""
+				)))
+	})
+	public ResponseEntity<CommonResponse<SessionResponseDTO.CreateSessionResult>> updateSession(
+		@Schema(description = "일정 ID") @PathVariable(name = "id") Long id,
+		@Valid @RequestBody SessionRequestDTO.UpdateSession request) {
+		SessionResponseDTO.CreateSessionResult result = sessionCommandService.updateSession(id, request);
+		return new ResponseEntity<>(CommonResponse.success(result), HttpStatus.OK);
+	}
 }

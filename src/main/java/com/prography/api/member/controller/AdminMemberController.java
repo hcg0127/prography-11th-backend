@@ -196,7 +196,7 @@ public class AdminMemberController {
 					summary = "이미 탈퇴 처리된 회원",
 					value = """
 						"code": "MEMBER_ALREADY_WITHDRAWN",
-						"message": 이미 탈퇴한 회원입니다."
+						"message": "이미 탈퇴한 회원입니다."
 						"""
 				)))
 	})
