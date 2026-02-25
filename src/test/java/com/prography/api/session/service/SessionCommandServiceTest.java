@@ -394,7 +394,7 @@ class SessionCommandServiceTest {
 		@Test
 		@DisplayName("실패: 세션을 찾을 수 없으면 SESSION_NOT_FOUND 예외가 발생한다.")
 		void fail_session_not_found() {
-			
+
 			// given
 			Long unknownId = 999L;
 			given(sessionRepository.findById(unknownId)).willReturn(Optional.empty());
@@ -404,6 +404,65 @@ class SessionCommandServiceTest {
 				.isInstanceOf(BusinessException.class)
 				.extracting("errorCode")
 				.isEqualTo(SessionErrorCode.SESSION_NOT_FOUND);
+		}
+	}
+
+	@Nested
+	@DisplayName("QR 코드 갱신(Refresh) 테스트")
+	class RefreshQrcodeTest {
+
+		@Test
+		@DisplayName("성공: 기존 QR 코드를 만료시키고, 동일한 세션의 새 QR 코드를 발급한다.")
+		void success() {
+			
+			// given
+			Long qrCodeId = 100L;
+			Long sessionId = 1L;
+
+			Session session = Session.builder().id(sessionId).build();
+
+			Qrcode oldQrcode = Qrcode.builder()
+				.id(qrCodeId)
+				.session(session)
+				.expiredAt(Instant.now().plus(1, ChronoUnit.DAYS))
+				.build();
+
+			given(qrcodeRepository.findById(qrCodeId)).willReturn(Optional.of(oldQrcode));
+
+			ArgumentCaptor<Qrcode> newQrCaptor = ArgumentCaptor.forClass(Qrcode.class);
+
+			// when
+			SessionResponseDTO.CreateQrcodeResult result = sessionCommandService.refreshQrcode(qrCodeId);
+
+			// then
+			assertThat(oldQrcode.getExpiredAt()).isBeforeOrEqualTo(Instant.now());
+
+			verify(qrcodeRepository).save(newQrCaptor.capture());
+			Qrcode newQrcode = newQrCaptor.getValue();
+
+			assertThat(newQrcode.getSession().getId()).isEqualTo(sessionId); // 세션 유지 확인
+			assertThat(newQrcode.getHashValue()).isNotNull();
+			assertThat(newQrcode.getHashValue()).isNotEqualTo(oldQrcode.getHashValue()); // 해시 변경 확인
+			assertThat(newQrcode.getExpiredAt()).isAfter(Instant.now()); // 미래 시간인지 확인
+
+			assertThat(result.hashValue()).isEqualTo(newQrcode.getHashValue());
+		}
+
+		@Test
+		@DisplayName("실패: 요청한 QR 코드 ID가 존재하지 않으면 QR_NOT_FOUND 예외가 발생한다.")
+		void fail_qr_not_found() {
+
+			// given
+			Long unknownQrId = 999L;
+			given(qrcodeRepository.findById(unknownQrId)).willReturn(Optional.empty());
+
+			// when & then
+			assertThatThrownBy(() -> sessionCommandService.refreshQrcode(unknownQrId))
+				.isInstanceOf(BusinessException.class)
+				.extracting("errorCode")
+				.isEqualTo(QrcodeErrorCode.QR_NOT_FOUND);
+
+			verify(qrcodeRepository, never()).save(any());
 		}
 	}
 }
