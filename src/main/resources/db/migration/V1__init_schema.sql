@@ -91,7 +91,6 @@ create table qrcodes
 create table sessions
 (
     date       date                                                     not null,
-    qr_active  boolean                                                  not null,
     time       time(6)                                                  not null,
     cohort_id  bigint,
     created_at timestamp(6) with time zone                              not null,
