@@ -77,4 +77,29 @@ public class SessionResponseDTO {
 			return new AttendanceSummary(0, 0, 0, 0, 0);
 		}
 	}
+
+	@Builder
+	public record SessionProfile(
+		Long id,
+		String title,
+		LocalDate date,
+		LocalTime time,
+		String location,
+		SessionStatus status,
+		Instant createdAt,
+		Instant updatedAt
+	) {
+		public static SessionProfile from(Session session) {
+			return SessionProfile.builder()
+				.id(session.getId())
+				.title(session.getTitle())
+				.date(session.getDate())
+				.time(session.getTime())
+				.location(session.getLocation())
+				.status(session.getStatus())
+				.createdAt(session.getCreatedAt())
+				.updatedAt(session.getUpdatedAt())
+				.build();
+		}
+	}
 }
