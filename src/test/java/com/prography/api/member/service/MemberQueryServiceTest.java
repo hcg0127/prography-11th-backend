@@ -221,8 +221,9 @@ class MemberQueryServiceTest {
 				.team(team)
 				.build();
 
-			given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
-			given(cohortMemberRepository.findByMember(member)).willReturn(cohortMember);
+			given(memberRepository.findById(anyLong())).willReturn(Optional.of(member));
+			given(cohortMemberRepository.findTopByMemberOrderByIdDesc(any(Member.class)))
+				.willReturn(Optional.of(cohortMember));
 
 			// when
 			MemberResponseDTO.CreateMemberResult result = memberQueryService.getCohortMemberById(memberId);
@@ -235,7 +236,7 @@ class MemberQueryServiceTest {
 			assertThat(result.teamName()).isEqualTo("Team A");
 
 			verify(memberRepository).findById(memberId);
-			verify(cohortMemberRepository).findByMember(member);
+			verify(cohortMemberRepository).findTopByMemberOrderByIdDesc(any(Member.class));
 		}
 
 		@Test
