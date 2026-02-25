@@ -31,6 +31,7 @@ import com.prography.api.session.domain.Session;
 import com.prography.api.session.domain.SessionStatus;
 import com.prography.api.session.dto.SessionRequestDTO;
 import com.prography.api.session.dto.SessionResponseDTO;
+import com.prography.api.session.exception.QrcodeErrorCode;
 import com.prography.api.session.exception.SessionErrorCode;
 import com.prography.api.session.repository.QrcodeRepository;
 import com.prography.api.session.repository.SessionRepository;
@@ -307,6 +308,102 @@ class SessionCommandServiceTest {
 				.isEqualTo(SessionErrorCode.SESSION_ALREADY_CANCELLED);
 
 			verify(attendanceRepository, never()).countByStatusBySessionId(any());
+		}
+	}
+
+	@Nested
+	@DisplayName("QR 코드 생성 테스트")
+	class CreateQrcodeTest {
+
+		@Test
+		@DisplayName("성공: 이전에 발급된 QR 코드가 없으면 새 QR 코드를 생성한다.")
+		void success_first_time() {
+
+			// given
+			Long sessionId = 1L;
+			Cohort cohort = Cohort.builder().id(1L).generation(11).build();
+			Session session = Session.builder().id(sessionId).cohort(cohort).build();
+
+			given(sessionRepository.findById(sessionId)).willReturn(Optional.of(session));
+
+			given(qrcodeRepository.findTopBySessionOrderByExpiredAtDesc(session))
+				.willReturn(Optional.empty());
+
+			// when
+			SessionResponseDTO.CreateQrcodeResult result = sessionCommandService.createQrcode(sessionId);
+
+			// then
+			assertThat(result.sessionId()).isEqualTo(sessionId);
+			assertThat(result.hashValue()).isNotNull();
+
+			verify(qrcodeRepository).save(any(Qrcode.class));
+		}
+
+		@Test
+		@DisplayName("성공: 기존 QR 코드가 있지만 이미 만료된 경우, 새 QR 코드를 생성한다.")
+		void success_when_expired_exists() {
+
+			// given
+			Long sessionId = 1L;
+			Cohort cohort = Cohort.builder().id(1L).generation(11).build();
+			Session session = Session.builder().id(sessionId).cohort(cohort).build();
+
+			Qrcode expiredQrcode = Qrcode.builder()
+				.session(session)
+				.expiredAt(Instant.now().minus(1, ChronoUnit.DAYS))
+				.build();
+
+			given(sessionRepository.findById(sessionId)).willReturn(Optional.of(session));
+			given(qrcodeRepository.findTopBySessionOrderByExpiredAtDesc(session))
+				.willReturn(Optional.of(expiredQrcode));
+
+			// when
+			SessionResponseDTO.CreateQrcodeResult result = sessionCommandService.createQrcode(sessionId);
+
+			// then
+			assertThat(result.hashValue()).isNotNull();
+			verify(qrcodeRepository).save(any(Qrcode.class));
+		}
+
+		@Test
+		@DisplayName("실패: 해당 세션에 아직 만료되지 않은(활성) QR 코드가 있다면 QR_ALREADY_ACTIVE 예외가 발생한다.")
+		void fail_active_qr_exists() {
+
+			// given
+			Long sessionId = 1L;
+			Session session = Session.builder().id(sessionId).build();
+
+			Qrcode activeQrcode = Qrcode.builder()
+				.session(session)
+				.expiredAt(Instant.now().plus(1, ChronoUnit.DAYS))
+				.build();
+
+			given(sessionRepository.findById(sessionId)).willReturn(Optional.of(session));
+			given(qrcodeRepository.findTopBySessionOrderByExpiredAtDesc(session))
+				.willReturn(Optional.of(activeQrcode));
+
+			// when & then
+			assertThatThrownBy(() -> sessionCommandService.createQrcode(sessionId))
+				.isInstanceOf(BusinessException.class)
+				.extracting("errorCode")
+				.isEqualTo(QrcodeErrorCode.QR_ALREADY_ACTIVE);
+
+			verify(qrcodeRepository, never()).save(any());
+		}
+
+		@Test
+		@DisplayName("실패: 세션을 찾을 수 없으면 SESSION_NOT_FOUND 예외가 발생한다.")
+		void fail_session_not_found() {
+			
+			// given
+			Long unknownId = 999L;
+			given(sessionRepository.findById(unknownId)).willReturn(Optional.empty());
+
+			// when & then
+			assertThatThrownBy(() -> sessionCommandService.createQrcode(unknownId))
+				.isInstanceOf(BusinessException.class)
+				.extracting("errorCode")
+				.isEqualTo(SessionErrorCode.SESSION_NOT_FOUND);
 		}
 	}
 }
