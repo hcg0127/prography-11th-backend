@@ -11,7 +11,9 @@ import io.lettuce.core.dynamic.annotation.Param;
 
 public interface AttendanceRepository extends JpaRepository<Attendance, Integer> {
 
-	@Query("SELECT a.status, COUNT(a) FROM Attendance a WHERE a.session.id = :sessionId")
+	@Query("SELECT a.status, COUNT(a) FROM Attendance a " +
+		"WHERE a.session.id = :sessionId " +
+		"GROUP BY a.status")
 	List<Object[]> countByStatusBySessionId(@Param("sessionId") Long sessionId);
 
 	Integer countBySessionId(Long sessionId);
