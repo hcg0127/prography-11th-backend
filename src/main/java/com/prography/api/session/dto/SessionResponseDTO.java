@@ -102,4 +102,23 @@ public class SessionResponseDTO {
 				.build();
 		}
 	}
+
+	@Builder
+	public record CreateQrcodeResult(
+		Long id,
+		Long sessionId,
+		String hashValue,
+		Instant createdAt,
+		Instant updatedAt
+	) {
+		public static CreateQrcodeResult of(Qrcode qrcode) {
+			return CreateQrcodeResult.builder()
+				.id(qrcode.getId())
+				.sessionId(qrcode.getSession().getId())
+				.hashValue(qrcode.getHashValue())
+				.createdAt(qrcode.getCreatedAt())
+				.updatedAt(qrcode.getUpdatedAt())
+				.build();
+		}
+	}
 }

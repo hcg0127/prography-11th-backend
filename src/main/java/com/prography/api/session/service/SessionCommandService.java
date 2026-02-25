@@ -18,6 +18,7 @@ import com.prography.api.session.domain.Session;
 import com.prography.api.session.domain.SessionStatus;
 import com.prography.api.session.dto.SessionRequestDTO;
 import com.prography.api.session.dto.SessionResponseDTO;
+import com.prography.api.session.exception.QrcodeErrorCode;
 import com.prography.api.session.exception.SessionErrorCode;
 import com.prography.api.session.repository.QrcodeRepository;
 import com.prography.api.session.repository.SessionRepository;
@@ -77,15 +78,6 @@ public class SessionCommandService {
 		return session;
 	}
 
-	public SessionResponseDTO.CreateSessionResult updateSession(Long id, SessionRequestDTO.UpdateSession request) {
-
-		Session session = validateSession(id);
-
-		session.updateSession(request);
-
-		return getCreateSessionResult(session);
-	}
-
 	private SessionResponseDTO.CreateSessionResult getCreateSessionResult(Session session) {
 		Qrcode qrcode = qrcodeRepository.findTopBySessionOrderByExpiredAtDesc(session)
 			.orElse(null);
@@ -99,6 +91,15 @@ public class SessionCommandService {
 		return SessionResponseDTO.CreateSessionResult.of(session, qrcode, summary);
 	}
 
+	public SessionResponseDTO.CreateSessionResult updateSession(Long id, SessionRequestDTO.UpdateSession request) {
+
+		Session session = validateSession(id);
+
+		session.updateSession(request);
+
+		return getCreateSessionResult(session);
+	}
+
 	public SessionResponseDTO.CreateSessionResult deleteSession(Long id) {
 
 		Session session = validateSession(id);
@@ -106,5 +107,28 @@ public class SessionCommandService {
 		session.deleteSession();
 
 		return getCreateSessionResult(session);
+	}
+
+	public SessionResponseDTO.CreateQrcodeResult createQrcode(Long sessionId) {
+
+		Session session = sessionRepository.findById(sessionId)
+			.orElseThrow(() -> new BusinessException(SessionErrorCode.SESSION_NOT_FOUND));
+
+		Qrcode qrcode = qrcodeRepository.findTopBySessionOrderByExpiredAtDesc(session)
+			.orElse(null);
+
+		if (qrcode != null && qrcode.getExpiredAt().isAfter(Instant.now())) {
+			throw new BusinessException(QrcodeErrorCode.QR_ALREADY_ACTIVE);
+		}
+
+		Qrcode newQrcode = Qrcode.builder()
+			.hashValue(UUID.randomUUID().toString())
+			.session(session)
+			.expiredAt(Instant.now().plus(1, ChronoUnit.DAYS))
+			.build();
+
+		qrcodeRepository.save(newQrcode);
+
+		return SessionResponseDTO.CreateQrcodeResult.of(newQrcode);
 	}
 }

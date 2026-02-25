@@ -115,4 +115,38 @@ public class AdminSessionController {
 		SessionResponseDTO.CreateSessionResult result = sessionCommandService.deleteSession(id);
 		return new ResponseEntity<>(CommonResponse.success(result), HttpStatus.OK);
 	}
+
+	@PostMapping("/{sessionId}/qrcodes")
+	@Operation(
+		summary = "QR 코드 생성",
+		description = "해당 일정에 새 QR 코드를 생성합니다."
+	)
+	@ApiResponses(value = {
+		@ApiResponse(responseCode = "201", description = "생성"),
+		@ApiResponse(responseCode = "404", description = "리소스를 찾을 수 없음",
+			content = @Content(schema = @Schema(implementation = CommonResponse.ErrorDetail.class),
+				examples = @ExampleObject(
+					name = "SESSION_NOT_FOUND",
+					summary = "해당 ID의 일정이 존재하지 않음",
+					value = """
+						"code": "SESSION_NOT_FOUND",
+						"message": "일정을 찾을 수 없습니다."
+						"""
+				))),
+		@ApiResponse(responseCode = "409", description = "중복 및 충돌",
+			content = @Content(schema = @Schema(implementation = CommonResponse.ErrorDetail.class),
+				examples = @ExampleObject(
+					name = "QR_ALREADY_ACTIVE",
+					summary = "해당 일정에 이미 활성(미만료) QR 코드 존재",
+					value = """
+						"code": "QR_ALREADY_ACTIVE",
+						"message": "이미 활성화된 QR 코드가 있습니다."
+						"""
+				))),
+	})
+	public ResponseEntity<CommonResponse<SessionResponseDTO.CreateQrcodeResult>> createQrcode(
+		@Schema(description = "일정 ID") @PathVariable(name = "sessionId") Long sessionId) {
+		SessionResponseDTO.CreateQrcodeResult result = sessionCommandService.createQrcode(sessionId);
+		return new ResponseEntity<>(CommonResponse.success(result), HttpStatus.CREATED);
+	}
 }
