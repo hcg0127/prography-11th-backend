@@ -17,4 +17,10 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Integer>
 	List<Object[]> countByStatusBySessionId(@Param("sessionId") Long sessionId);
 
 	Integer countBySessionId(Long sessionId);
+
+	@Query("SELECT a.session.id, a.status, COUNT(a) " +
+		"FROM Attendance a " +
+		"WHERE a.session.id IN :sessionIds " +
+		"GROUP BY a.session.id, a.status")
+	List<Object[]> countStatusBySessionIds(@Param("sessionIds") List<Long> sessionIds);
 }

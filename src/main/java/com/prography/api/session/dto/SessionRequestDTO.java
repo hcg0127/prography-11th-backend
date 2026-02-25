@@ -52,4 +52,18 @@ public class SessionRequestDTO {
 		SessionStatus status
 	) {
 	}
+
+	public record GetSessionListAdmin(
+		@JsonFormat(pattern = "yyyy-MM-dd")
+		@Schema(description = "시작 날짜 필터 (yyyy-MM-dd)", example = "2026-03-01")
+		LocalDate dateFrom,
+
+		@JsonFormat(pattern = "yyyy-MM-dd")
+		@Schema(description = "종료 날짜 (yyyy-MM-dd)", example = "2026-03-01")
+		LocalDate dateTo,
+
+		@Schema(description = "상태 필터 (SCHEDULED, IN_PROGRESS, COMPLETED, CANCELLED", examples = "SCHEDULED")
+		SessionStatus status
+	) {
+	}
 }

@@ -1,8 +1,12 @@
 package com.prography.api.session.controller;
 
+import java.util.List;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -14,6 +18,7 @@ import com.prography.api.global.common.CommonResponse;
 import com.prography.api.session.dto.SessionRequestDTO;
 import com.prography.api.session.dto.SessionResponseDTO;
 import com.prography.api.session.service.SessionCommandService;
+import com.prography.api.session.service.SessionQueryService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -32,6 +37,7 @@ import lombok.extern.slf4j.Slf4j;
 public class AdminSessionController {
 
 	private final SessionCommandService sessionCommandService;
+	private final SessionQueryService sessionQueryService;
 
 	@PostMapping()
 	@Operation(
@@ -148,5 +154,19 @@ public class AdminSessionController {
 		@Schema(description = "일정 ID") @PathVariable(name = "sessionId") Long sessionId) {
 		SessionResponseDTO.CreateQrcodeResult result = sessionCommandService.createQrcode(sessionId);
 		return new ResponseEntity<>(CommonResponse.success(result), HttpStatus.CREATED);
+	}
+
+	@GetMapping()
+	@Operation(
+		summary = "일정 목록 조회 (관리자용)",
+		description = "현재 기수(11기)의 일정 목록을 출결 요약 정보와 함께 조회합니다. CANCELLED 포함 모든 상태의 일정이 반환됩니다."
+	)
+	@ApiResponses(value = {
+		@ApiResponse(responseCode = "200", description = "성공")
+	})
+	public ResponseEntity<CommonResponse<List<SessionResponseDTO.CreateSessionResult>>> getSessionListAdmin(
+		@Valid @ModelAttribute SessionRequestDTO.GetSessionListAdmin request) {
+		List<SessionResponseDTO.CreateSessionResult> result = sessionQueryService.getSessionListAdmin(request);
+		return new ResponseEntity<>(CommonResponse.success(result), HttpStatus.OK);
 	}
 }
