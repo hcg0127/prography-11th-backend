@@ -49,4 +49,8 @@ public class Qrcode extends BaseTimeEntity {
 			this.expiredAt = Instant.now().plus(1, ChronoUnit.DAYS);
 		}
 	}
+
+	public void expire() {
+		this.expiredAt = Instant.now();
+	}
 }

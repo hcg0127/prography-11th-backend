@@ -131,4 +131,22 @@ public class SessionCommandService {
 
 		return SessionResponseDTO.CreateQrcodeResult.of(newQrcode);
 	}
+
+	public SessionResponseDTO.CreateQrcodeResult refreshQrcode(Long qrCodeId) {
+
+		Qrcode qrcode = qrcodeRepository.findById(qrCodeId)
+			.orElseThrow(() -> new BusinessException(QrcodeErrorCode.QR_NOT_FOUND));
+
+		qrcode.expire();
+
+		Qrcode newQrcode = Qrcode.builder()
+			.hashValue(UUID.randomUUID().toString())
+			.session(qrcode.getSession())
+			.expiredAt(Instant.now().plus(1, ChronoUnit.DAYS))
+			.build();
+
+		qrcodeRepository.save(newQrcode);
+
+		return SessionResponseDTO.CreateQrcodeResult.of(newQrcode);
+	}
 }
