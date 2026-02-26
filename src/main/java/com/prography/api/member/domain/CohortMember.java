@@ -72,4 +72,8 @@ public class CohortMember extends BaseTimeEntity {
 		if (team != null)
 			this.team = team;
 	}
+
+	public void minusDeposit(int penaltyAmount) {
+		this.deposit -= penaltyAmount;
+	}
 }

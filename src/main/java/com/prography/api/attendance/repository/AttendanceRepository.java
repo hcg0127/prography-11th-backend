@@ -1,12 +1,15 @@
 package com.prography.api.attendance.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.prography.api.attendance.domain.Attendance;
+import com.prography.api.member.domain.Member;
+import com.prography.api.session.domain.Session;
 
 public interface AttendanceRepository extends JpaRepository<Attendance, Integer> {
 
@@ -22,4 +25,6 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Integer>
 		"WHERE a.session.id IN :sessionIds " +
 		"GROUP BY a.session.id, a.status")
 	List<Object[]> countStatusBySessionIds(@Param("sessionIds") List<Long> sessionIds);
+
+	Optional<Attendance> findBySessionAndMember(Session session, Member member);
 }

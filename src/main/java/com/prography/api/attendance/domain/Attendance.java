@@ -4,6 +4,7 @@ import java.time.Instant;
 
 import com.prography.api.global.common.BaseTimeEntity;
 import com.prography.api.member.domain.Member;
+import com.prography.api.session.domain.Qrcode;
 import com.prography.api.session.domain.Session;
 
 import jakarta.persistence.Column;
@@ -57,4 +58,8 @@ public class Attendance extends BaseTimeEntity {
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "session_id")
 	private Session session;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "qrcode_id")
+	private Qrcode qrcode;
 }

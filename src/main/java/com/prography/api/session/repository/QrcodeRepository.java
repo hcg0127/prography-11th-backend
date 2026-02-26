@@ -12,4 +12,6 @@ public interface QrcodeRepository extends JpaRepository<Qrcode, Long> {
 	Optional<Qrcode> findTopBySessionOrderByExpiredAtDesc(Session session);
 
 	List<Qrcode> findAllBySessionIdIn(List<Long> sessionIdList);
+
+	Optional<Qrcode> findByHashValue(String hashValue);
 }
