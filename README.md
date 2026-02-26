@@ -6,9 +6,63 @@
 
 * **Language**: Java 21
 * **Framework**: Spring Boot 3.5.11
-* **Database**: H2 (In-memory Mode)
+* **Database**: H2 (In-memory Mode), Flyway (Migration)
 * **ORM**: JPA (Hibernate), QueryDSL
 * **Build Tool**: Gradle
+
+---
+
+## 📂 패키지 구조 (Package Structure)
+
+본 프로젝트는 향후 서비스의 확장성과 유지보수성을 고려하여 도메인형 패키지 구조를 채택했습니다.
+
+```text
+src/main/java/com/prography/api
+ ├── global                  # 전역 공통 설정
+ │   ├── config              # Security, Swagger, QueryDSL 등 설정
+ │   ├── error               # Global Exception Handler 및 Error Code Enum 등
+ │   └── common              # 공통 응답 및 BaseEntity
+ │
+ ├── member                  # [Domain] 회원 관리 (예시 구조)
+ │   ├── controller          # Presentation Layer
+ │   ├── service             # Business Layer
+ │   ├── repository          # Data Access Layer
+ │   ├── domain              # JPA Entities
+ │   ├── dto                 # Request/Response DTOs
+ │   └── exception           # 해당 도메인 전용 예외
+ │
+ ├── cohort                  # [Domain] 기수/파트/팀 관리
+ ├── session                 # [Domain] 일정/QR 코드 관리
+ ├── attendance              # [Domain] 출석/보증금 관리
+ └── auth                    # [Domain] 인증/인가 (JWT, OAuth)
+```
+
+---
+
+## 📜 깃 컨벤션 (Git Convention)
+
+본 프로젝트는 일관된 히스토리 관리를 위해 커밋 규칙(Commit Convention)을 수립하고 준수했습니다.
+
+### Commit Message Format
+
+```text
+Type: Commit message
+ex) feat: 회원가입 기능 구현
+```
+
+### Commit Types
+
+```text
+feat: 새로운 기능 추가 (Features)
+
+fix: 버그 및 코드 수정 (Bug & Code Fixes)
+
+docs: 문서 작성 (Documentation)
+
+test: 테스트 코드 추가 및 수정 (Tests)
+```
+
+---
 
 ## 🚀 실행 방법 (Getting Started)
 
@@ -17,7 +71,7 @@
 
 ### 1. 사전 요구사항 (Prerequisites)
 
-* **Java 17** 이상이 설치되어 있어야 합니다.
+* **Java 21** 이상이 설치되어 있어야 합니다.
 
 ### 2. 프로젝트 클론 및 실행 (Build & Run)
 
