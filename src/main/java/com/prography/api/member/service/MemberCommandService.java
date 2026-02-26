@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.prography.api.attendance.domain.DepositHistory;
 import com.prography.api.attendance.repository.DepositHistoryRepository;
+import com.prography.api.auth.exception.AuthErrorCode;
 import com.prography.api.cohort.domain.Cohort;
 import com.prography.api.cohort.domain.Part;
 import com.prography.api.cohort.domain.Team;
@@ -19,7 +20,6 @@ import com.prography.api.member.domain.Member;
 import com.prography.api.member.domain.MemberStatus;
 import com.prography.api.member.dto.MemberRequestDTO;
 import com.prography.api.member.dto.MemberResponseDTO;
-import com.prography.api.member.exception.AuthErrorCode;
 import com.prography.api.member.exception.MemberErrorCode;
 import com.prography.api.member.repository.CohortMemberRepository;
 import com.prography.api.member.repository.MemberRepository;

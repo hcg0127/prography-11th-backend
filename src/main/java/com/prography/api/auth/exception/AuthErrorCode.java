@@ -1,4 +1,4 @@
-package com.prography.api.member.exception;
+package com.prography.api.auth.exception;
 
 import org.springframework.http.HttpStatus;
 

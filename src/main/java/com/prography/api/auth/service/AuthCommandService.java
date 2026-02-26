@@ -6,10 +6,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.prography.api.auth.dto.AuthRequestDTO;
 import com.prography.api.auth.dto.AuthResponseDTO;
+import com.prography.api.auth.exception.AuthErrorCode;
 import com.prography.api.global.error.BusinessException;
 import com.prography.api.member.domain.Member;
 import com.prography.api.member.domain.MemberStatus;
-import com.prography.api.member.exception.AuthErrorCode;
 import com.prography.api.member.exception.MemberErrorCode;
 import com.prography.api.member.repository.MemberRepository;
 
